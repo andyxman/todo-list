@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="一个简单的待办事项应用" />
+    <title>我的待办</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="todo-app" aria-labelledby="page-title">
+        <header>
+          <p class="eyebrow">TODAY'S FOCUS</p>
+          <h1 id="page-title">我的待办</h1>
+          <p class="subtitle">记下现在要做的事，逐一完成。</p>
+        </header>
+
+        <form id="todo-form" class="todo-form" novalidate>
+          <label class="sr-only" for="todo-input">新任务</label>
+          <input id="todo-input" name="todo" type="text" placeholder="输入一项任务…" autocomplete="off" />
+          <button type="submit">添加任务</button>
+        </form>
+        <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
+
+        <section class="todo-section" aria-labelledby="todo-list-title">
+          <h2 id="todo-list-title">任务列表</h2>
+          <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
+          <p id="empty-state" class="empty-state">还没有任务。先添加一项吧。</p>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
