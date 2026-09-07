@@ -21,3 +21,14 @@ export function addTodo(todos, title) {
     },
   ];
 }
+
+/**
+ * Remove the todo identified by id and return a new list.
+ *
+ * @param {Array<{id: string, title: string, completed: boolean}>} todos
+ * @param {string} id
+ * @returns {Array<{id: string, title: string, completed: boolean}>}
+ */
+export function deleteTodo(todos, id) {
+  return todos.filter((todo) => todo.id !== id);
+}

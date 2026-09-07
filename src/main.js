@@ -1,5 +1,5 @@
 import './style.css';
-import { addTodo } from './todo.js';
+import { addTodo, deleteTodo } from './todo.js';
 
 const form = document.querySelector('#todo-form');
 const input = document.querySelector('#todo-input');
@@ -17,7 +17,19 @@ function renderTodos() {
     const item = document.createElement('li');
     item.className = 'todo-item';
     item.dataset.todoId = todo.id;
-    item.textContent = todo.title;
+
+    const title = document.createElement('span');
+    title.className = 'todo-title';
+    title.textContent = todo.title;
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-button';
+    deleteButton.type = 'button';
+    deleteButton.dataset.action = 'delete';
+    deleteButton.textContent = '删除';
+    deleteButton.setAttribute('aria-label', `删除任务：${todo.title}`);
+
+    item.append(title, deleteButton);
     todoList.append(item);
   }
 }
@@ -39,6 +51,18 @@ form.addEventListener('submit', (event) => {
     showError(error.message);
     input.focus();
   }
+});
+
+todoList.addEventListener('click', (event) => {
+  const deleteButton = event.target.closest('[data-action="delete"]');
+
+  if (!deleteButton) {
+    return;
+  }
+
+  const item = deleteButton.closest('.todo-item');
+  todos = deleteTodo(todos, item.dataset.todoId);
+  renderTodos();
 });
 
 renderTodos();
