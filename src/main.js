@@ -1,4 +1,5 @@
 import './style.css';
+import { loadTodos, saveTodos } from './storage.js';
 import { addTodo, deleteTodo, toggleTodo, updateTodo } from './todo.js';
 
 const form = document.querySelector('#todo-form');
@@ -7,7 +8,7 @@ const errorMessage = document.querySelector('#form-error');
 const todoList = document.querySelector('#todo-list');
 const emptyState = document.querySelector('#empty-state');
 
-let todos = [];
+let todos = loadTodos();
 let editingTodoId = null;
 
 function renderTodos() {
@@ -93,6 +94,7 @@ form.addEventListener('submit', (event) => {
 
   try {
     todos = addTodo(todos, input.value);
+    saveTodos(todos);
     showError();
     input.value = '';
     renderTodos();
@@ -114,6 +116,7 @@ todoList.addEventListener('click', (event) => {
 
   if (button.dataset.action === 'delete') {
     todos = deleteTodo(todos, item.dataset.todoId);
+    saveTodos(todos);
     editingTodoId = null;
     renderTodos();
   }
@@ -139,6 +142,7 @@ todoList.addEventListener('change', (event) => {
 
   const item = event.target.closest('.todo-item');
   todos = toggleTodo(todos, item.dataset.todoId);
+  saveTodos(todos);
   renderTodos();
 });
 
@@ -155,6 +159,7 @@ todoList.addEventListener('submit', (event) => {
 
   try {
     todos = updateTodo(todos, item.dataset.todoId, editInput.value);
+    saveTodos(todos);
     editingTodoId = null;
     showError();
     renderTodos();
