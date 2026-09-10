@@ -46,6 +46,15 @@ describe('loadTodos', () => {
 
     expect(loadTodos()).toEqual([]);
   });
+
+  it('keeps valid todos while discarding malformed saved entries', () => {
+    const validTodo = { id: 'todo-id', title: '保留我', completed: false };
+    const storage = createStorage();
+    storage.getItem.mockReturnValue(JSON.stringify([validTodo, { id: 'broken-id' }, null]));
+    vi.stubGlobal('localStorage', storage);
+
+    expect(loadTodos()).toEqual([validTodo]);
+  });
 });
 
 describe('saveTodos', () => {

@@ -1,5 +1,17 @@
 export const STORAGE_KEY = 'todo-list.todos';
 
+function isStoredTodo(todo) {
+  return (
+    typeof todo === 'object' &&
+    todo !== null &&
+    typeof todo.id === 'string' &&
+    todo.id.length > 0 &&
+    typeof todo.title === 'string' &&
+    todo.title.trim().length > 0 &&
+    typeof todo.completed === 'boolean'
+  );
+}
+
 /**
  * Load saved todos from the current browser.
  * Invalid or missing saved data is treated as an empty list.
@@ -15,7 +27,7 @@ export function loadTodos() {
 
   try {
     const todos = JSON.parse(savedTodos);
-    return Array.isArray(todos) ? todos : [];
+    return Array.isArray(todos) ? todos.filter(isStoredTodo) : [];
   } catch {
     return [];
   }
