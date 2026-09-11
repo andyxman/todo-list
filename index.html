@@ -29,7 +29,18 @@
         <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
 
         <section class="todo-section" aria-labelledby="todo-list-title">
-          <h2 id="todo-list-title">任务列表</h2>
+          <div class="todo-section-header">
+            <div>
+              <h2 id="todo-list-title">任务列表</h2>
+              <p id="remaining-count" class="remaining-count" aria-live="polite"></p>
+            </div>
+            <button id="clear-completed" class="clear-completed" type="button">清除已完成</button>
+          </div>
+          <div class="todo-filters" role="group" aria-label="筛选任务">
+            <button class="filter-button filter-button--active" type="button" data-filter="all" aria-pressed="true">全部</button>
+            <button class="filter-button" type="button" data-filter="active" aria-pressed="false">未完成</button>
+            <button class="filter-button" type="button" data-filter="completed" aria-pressed="false">已完成</button>
+          </div>
           <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
           <p id="empty-state" class="empty-state">还没有任务。先添加一项吧。</p>
         </section>

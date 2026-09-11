@@ -7,15 +7,47 @@ const input = document.querySelector('#todo-input');
 const errorMessage = document.querySelector('#form-error');
 const todoList = document.querySelector('#todo-list');
 const emptyState = document.querySelector('#empty-state');
+const remainingCount = document.querySelector('#remaining-count');
+const clearCompletedButton = document.querySelector('#clear-completed');
+const filterButtons = document.querySelectorAll('[data-filter]');
 
 let todos = loadTodos();
 let editingTodoId = null;
+let currentFilter = 'all';
+
+function getVisibleTodos() {
+  if (currentFilter === 'active') {
+    return todos.filter((todo) => !todo.completed);
+  }
+
+  if (currentFilter === 'completed') {
+    return todos.filter((todo) => todo.completed);
+  }
+
+  return todos;
+}
 
 function renderTodos() {
   todoList.replaceChildren();
-  emptyState.hidden = todos.length > 0;
+  const visibleTodos = getVisibleTodos();
+  const incompleteCount = todos.filter((todo) => !todo.completed).length;
 
-  for (const todo of todos) {
+  emptyState.hidden = visibleTodos.length > 0;
+  emptyState.textContent = todos.length === 0
+    ? '还没有任务。先添加一项吧。'
+    : '没有符合当前筛选条件的任务。';
+  remainingCount.textContent = incompleteCount === 0
+    ? '全部完成，干得漂亮！'
+    : `还有 ${incompleteCount} 项未完成`;
+  clearCompletedButton.disabled = !todos.some((todo) => todo.completed);
+
+  for (const button of filterButtons) {
+    const isActive = button.dataset.filter === currentFilter;
+    button.classList.toggle('filter-button--active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  }
+
+  for (const todo of visibleTodos) {
     const item = document.createElement('li');
     item.className = 'todo-item';
     item.classList.toggle('todo-item--completed', todo.completed);
@@ -167,6 +199,21 @@ todoList.addEventListener('submit', (event) => {
     showError(error.message);
     editInput.focus();
   }
+});
+
+filterButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    currentFilter = button.dataset.filter;
+    editingTodoId = null;
+    renderTodos();
+  });
+});
+
+clearCompletedButton.addEventListener('click', () => {
+  todos = todos.filter((todo) => !todo.completed);
+  saveTodos(todos);
+  editingTodoId = null;
+  renderTodos();
 });
 
 renderTodos();

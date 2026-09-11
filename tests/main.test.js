@@ -10,6 +10,13 @@ function createPage() {
       <button type="submit">添加任务</button>
     </form>
     <p id="form-error"></p>
+    <p id="remaining-count"></p>
+    <button id="clear-completed" type="button">清除已完成</button>
+    <div>
+      <button type="button" data-filter="all" aria-pressed="true">全部</button>
+      <button type="button" data-filter="active" aria-pressed="false">未完成</button>
+      <button type="button" data-filter="completed" aria-pressed="false">已完成</button>
+    </div>
     <ul id="todo-list"></ul>
     <p id="empty-state">还没有任务。先添加一项吧。</p>
   `;
@@ -30,6 +37,8 @@ async function startApp(savedTodos) {
     error: document.querySelector('#form-error'),
     list: document.querySelector('#todo-list'),
     emptyState: document.querySelector('#empty-state'),
+    remainingCount: document.querySelector('#remaining-count'),
+    clearCompletedButton: document.querySelector('#clear-completed'),
   };
 }
 
@@ -127,5 +136,43 @@ describe('todo page', () => {
     expect(list.textContent).toContain('刷新后仍存在');
     expect(list.querySelector('[data-action="toggle"]').checked).toBe(true);
     expect(list.querySelector('.todo-item').classList.contains('todo-item--completed')).toBe(true);
+  });
+
+  it('filters todos and keeps the remaining count visible', async () => {
+    const todos = [
+      { id: 'active-id', title: '未完成任务', completed: false },
+      { id: 'done-id', title: '已完成任务', completed: true },
+    ];
+    const { list, remainingCount } = await startApp(todos);
+
+    expect(remainingCount.textContent).toBe('还有 1 项未完成');
+
+    document.querySelector('[data-filter="active"]').click();
+    expect(list.textContent).toContain('未完成任务');
+    expect(list.textContent).not.toContain('已完成任务');
+
+    document.querySelector('[data-filter="completed"]').click();
+    expect(list.textContent).toContain('已完成任务');
+    expect(list.textContent).not.toContain('未完成任务');
+    expect(document.querySelector('[data-filter="completed"]').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('clears completed todos and saves the remaining todos', async () => {
+    const todos = [
+      { id: 'active-id', title: '保留任务', completed: false },
+      { id: 'done-id', title: '清除任务', completed: true },
+    ];
+    const { list, clearCompletedButton, remainingCount } = await startApp(todos);
+
+    expect(clearCompletedButton.disabled).toBe(false);
+    clearCompletedButton.click();
+
+    expect(list.textContent).toContain('保留任务');
+    expect(list.textContent).not.toContain('清除任务');
+    expect(remainingCount.textContent).toBe('还有 1 项未完成');
+    expect(clearCompletedButton.disabled).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toEqual([
+      expect.objectContaining({ id: 'active-id', completed: false }),
+    ]);
   });
 });
