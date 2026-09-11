@@ -7,6 +7,8 @@ function createPage() {
   document.body.innerHTML = `
     <form id="todo-form">
       <input id="todo-input" name="todo" />
+      <select id="priority-input" name="priority"><option value="normal">普通</option><option value="high">高</option></select>
+      <input id="due-input" name="dueAt" type="datetime-local" />
       <button type="submit">添加任务</button>
     </form>
     <p id="form-error"></p>
@@ -34,6 +36,8 @@ async function startApp(savedTodos) {
   return {
     form: document.querySelector('#todo-form'),
     input: document.querySelector('#todo-input'),
+    priorityInput: document.querySelector('#priority-input'),
+    dueInput: document.querySelector('#due-input'),
     error: document.querySelector('#form-error'),
     list: document.querySelector('#todo-list'),
     emptyState: document.querySelector('#empty-state'),
@@ -80,6 +84,22 @@ describe('todo page', () => {
     ]);
   });
 
+  it('adds a todo with priority and deadline, then displays both', async () => {
+    const { form, input, priorityInput, dueInput, list } = await startApp();
+    input.value = '提交报告';
+    priorityInput.value = 'high';
+    dueInput.value = '2030-02-03T09:30';
+
+    submit(form);
+
+    expect(list.textContent).toContain('高优先级');
+    expect(list.textContent).toContain('截止');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY))[0]).toEqual(expect.objectContaining({
+      priority: 'high',
+      dueAt: new Date('2030-02-03T09:30').toISOString(),
+    }));
+  });
+
   it('shows an error and does not save an empty todo', async () => {
     const { form, input, error, list } = await startApp();
     input.value = '   ';
@@ -110,6 +130,30 @@ describe('todo page', () => {
 
     expect(list.textContent).toContain('修改后的任务');
     expect(list.textContent).not.toContain('不会保存的修改');
+  });
+
+  it('edits a todo priority and clears its deadline', async () => {
+    const todo = {
+      id: 'todo-id',
+      title: '原始任务',
+      completed: false,
+      priority: 'normal',
+      dueAt: '2030-02-03T09:30:00.000Z',
+    };
+    const { list } = await startApp([todo]);
+
+    list.querySelector('[data-action="edit"]').click();
+    const editForm = list.querySelector('.edit-form');
+    editForm.elements.priority.value = 'high';
+    editForm.elements.dueAt.value = '';
+    submit(editForm);
+
+    expect(list.textContent).toContain('高优先级');
+    expect(list.textContent).not.toContain('截止');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY))[0]).toEqual(expect.objectContaining({
+      priority: 'high',
+      dueAt: null,
+    }));
   });
 
   it('toggles completion, saves it, then deletes the todo and restores the empty state', async () => {

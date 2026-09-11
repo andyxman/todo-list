@@ -1,9 +1,11 @@
 import './style.css';
 import { loadTodos, saveTodos } from './storage.js';
-import { addTodo, deleteTodo, toggleTodo, updateTodo } from './todo.js';
+import { addTodo, deleteTodo, getTodoDueStatus, toggleTodo, updateTodo } from './todo.js';
 
 const form = document.querySelector('#todo-form');
 const input = document.querySelector('#todo-input');
+const priorityInput = document.querySelector('#priority-input');
+const dueInput = document.querySelector('#due-input');
 const errorMessage = document.querySelector('#form-error');
 const todoList = document.querySelector('#todo-list');
 const emptyState = document.querySelector('#empty-state');
@@ -14,6 +16,34 @@ const filterButtons = document.querySelectorAll('[data-filter]');
 let todos = loadTodos();
 let editingTodoId = null;
 let currentFilter = 'all';
+
+const priorityLabels = {
+  low: '低优先级',
+  normal: '普通优先级',
+  high: '高优先级',
+};
+
+function toDateTimeLocalValue(dueAt) {
+  if (!dueAt) {
+    return '';
+  }
+
+  const dueDate = new Date(dueAt);
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return '';
+  }
+
+  const localDate = new Date(dueDate.getTime() - dueDate.getTimezoneOffset() * 60 * 1000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+function formatDueAt(dueAt) {
+  return new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(dueAt));
+}
 
 function getVisibleTodos() {
   if (currentFilter === 'active') {
@@ -74,6 +104,37 @@ function renderTodos() {
       editInput.value = todo.title;
       editInput.setAttribute('aria-label', '修改任务名称');
 
+      const editPriorityField = document.createElement('label');
+      editPriorityField.className = 'edit-priority-field';
+      editPriorityField.textContent = '优先级';
+
+      const editPriorityInput = document.createElement('select');
+      editPriorityInput.className = 'edit-priority-input';
+      editPriorityInput.name = 'priority';
+      editPriorityInput.setAttribute('aria-label', '修改优先级');
+
+      for (const [value, label] of Object.entries(priorityLabels)) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label.replace('优先级', '');
+        option.selected = todo.priority === value;
+        editPriorityInput.append(option);
+      }
+
+      editPriorityField.append(editPriorityInput);
+
+      const editDueField = document.createElement('label');
+      editDueField.className = 'edit-due-field';
+      editDueField.textContent = '截止时间（可选）';
+
+      const editDueInput = document.createElement('input');
+      editDueInput.className = 'edit-due-input';
+      editDueInput.name = 'dueAt';
+      editDueInput.type = 'datetime-local';
+      editDueInput.value = toDateTimeLocalValue(todo.dueAt);
+      editDueInput.setAttribute('aria-label', '修改截止时间');
+      editDueField.append(editDueInput);
+
       const saveButton = document.createElement('button');
       saveButton.className = 'save-button';
       saveButton.type = 'submit';
@@ -85,13 +146,40 @@ function renderTodos() {
       cancelButton.dataset.action = 'cancel-edit';
       cancelButton.textContent = '取消';
 
-      editForm.append(editInput, saveButton, cancelButton);
+      editForm.append(editInput, editPriorityField, editDueField, saveButton, cancelButton);
       content.append(editForm);
     } else {
+      const titleRow = document.createElement('div');
+      titleRow.className = 'todo-title-row';
+
       const title = document.createElement('span');
       title.className = 'todo-title';
       title.textContent = todo.title;
-      content.append(title);
+      titleRow.append(title);
+
+      const priority = document.createElement('span');
+      priority.className = `priority-badge priority-badge--${todo.priority}`;
+      priority.textContent = priorityLabels[todo.priority];
+      titleRow.append(priority);
+      content.append(titleRow);
+
+      if (todo.dueAt) {
+        const dueDate = document.createElement('p');
+        const dueStatus = getTodoDueStatus(todo);
+        dueDate.className = 'due-date';
+
+        if (dueStatus === 'overdue') {
+          dueDate.classList.add('due-date--overdue');
+          dueDate.textContent = `已逾期 · 截止 ${formatDueAt(todo.dueAt)}`;
+        } else if (dueStatus === 'due-soon') {
+          dueDate.classList.add('due-date--soon');
+          dueDate.textContent = `即将到期 · 截止 ${formatDueAt(todo.dueAt)}`;
+        } else {
+          dueDate.textContent = `截止 ${formatDueAt(todo.dueAt)}`;
+        }
+
+        content.append(dueDate);
+      }
     }
 
     const actions = document.createElement('div');
@@ -125,10 +213,12 @@ form.addEventListener('submit', (event) => {
   event.preventDefault();
 
   try {
-    todos = addTodo(todos, input.value);
+    todos = addTodo(todos, input.value, priorityInput.value, dueInput.value);
     saveTodos(todos);
     showError();
     input.value = '';
+    priorityInput.value = 'normal';
+    dueInput.value = '';
     renderTodos();
     input.focus();
   } catch (error) {
@@ -188,9 +278,11 @@ todoList.addEventListener('submit', (event) => {
   event.preventDefault();
   const item = editForm.closest('.todo-item');
   const editInput = editForm.elements.title;
+  const editPriorityInput = editForm.elements.priority;
+  const editDueInput = editForm.elements.dueAt;
 
   try {
-    todos = updateTodo(todos, item.dataset.todoId, editInput.value);
+    todos = updateTodo(todos, item.dataset.todoId, editInput.value, editPriorityInput.value, editDueInput.value);
     saveTodos(todos);
     editingTodoId = null;
     showError();

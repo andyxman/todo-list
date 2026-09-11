@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { addTodo, deleteTodo, toggleTodo, updateTodo } from '../src/todo.js';
+import { addTodo, deleteTodo, getTodoDueStatus, toggleTodo, updateTodo } from '../src/todo.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -15,8 +15,26 @@ describe('addTodo', () => {
 
     expect(result).toEqual([
       existingTodo,
-      { id: 'todo-uuid-1', title: '购买牛奶', completed: false },
+      {
+        id: 'todo-uuid-1',
+        title: '购买牛奶',
+        completed: false,
+        priority: 'normal',
+        dueAt: null,
+      },
     ]);
+  });
+
+  it('adds priority and a deadline to a todo', () => {
+    vi.stubGlobal('crypto', { randomUUID: () => 'todo-uuid-1' });
+
+    const result = addTodo([], '提交报告', 'high', '2030-02-03T09:30');
+
+    expect(result[0]).toEqual(expect.objectContaining({
+      title: '提交报告',
+      priority: 'high',
+      dueAt: new Date('2030-02-03T09:30').toISOString(),
+    }));
   });
 
   it('does not mutate the supplied todo list', () => {
@@ -65,8 +83,14 @@ describe('updateTodo', () => {
     const otherTodo = { id: 'other-id', title: '保持不变', completed: true };
     const todos = [updatedTodo, otherTodo];
 
-    expect(updateTodo(todos, 'update-id', '  修改后  ')).toEqual([
-      { id: 'update-id', title: '修改后', completed: false },
+    expect(updateTodo(todos, 'update-id', '  修改后  ', 'high', '2030-02-03T09:30')).toEqual([
+      {
+        id: 'update-id',
+        title: '修改后',
+        completed: false,
+        priority: 'high',
+        dueAt: new Date('2030-02-03T09:30').toISOString(),
+      },
       otherTodo,
     ]);
   });
@@ -84,6 +108,20 @@ describe('updateTodo', () => {
 
     expect(result).not.toBe(todos);
     expect(todos).toEqual([{ id: 'update-id', title: '修改前', completed: false }]);
+  });
+
+  it('clears a todo deadline when an empty value is saved', () => {
+    const todos = [{
+      id: 'update-id',
+      title: '修改前',
+      completed: false,
+      priority: 'high',
+      dueAt: '2030-02-03T09:30:00.000Z',
+    }];
+
+    expect(updateTodo(todos, 'update-id', '修改后', 'low', '')).toEqual([
+      expect.objectContaining({ priority: 'low', dueAt: null }),
+    ]);
   });
 });
 
@@ -113,5 +151,20 @@ describe('toggleTodo', () => {
 
     expect(result).not.toBe(todos);
     expect(todos).toEqual([{ id: 'toggle-id', title: '切换我', completed: false }]);
+  });
+});
+
+describe('getTodoDueStatus', () => {
+  const now = new Date('2030-02-01T10:00:00.000Z');
+
+  it('identifies overdue, due-soon, and upcoming todos', () => {
+    expect(getTodoDueStatus({ completed: false, dueAt: '2030-02-01T09:59:00.000Z' }, now)).toBe('overdue');
+    expect(getTodoDueStatus({ completed: false, dueAt: '2030-02-02T09:00:00.000Z' }, now)).toBe('due-soon');
+    expect(getTodoDueStatus({ completed: false, dueAt: '2030-02-03T10:00:00.000Z' }, now)).toBe('upcoming');
+  });
+
+  it('does not flag completed or undated todos', () => {
+    expect(getTodoDueStatus({ completed: true, dueAt: '2030-02-01T09:00:00.000Z' }, now)).toBeNull();
+    expect(getTodoDueStatus({ completed: false, dueAt: null }, now)).toBeNull();
   });
 });

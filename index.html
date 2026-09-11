@@ -22,8 +22,24 @@
         </header>
 
         <form id="todo-form" class="todo-form" novalidate>
-          <label class="sr-only" for="todo-input">新任务</label>
-          <input id="todo-input" name="todo" type="text" placeholder="输入一项任务…" autocomplete="off" />
+          <div class="todo-fields">
+            <label class="task-field" for="todo-input">
+              <span>新任务</span>
+              <input id="todo-input" name="todo" type="text" placeholder="输入一项任务…" autocomplete="off" />
+            </label>
+            <label class="priority-field" for="priority-input">
+              <span>优先级</span>
+              <select id="priority-input" name="priority">
+                <option value="low">低</option>
+                <option value="normal" selected>普通</option>
+                <option value="high">高</option>
+              </select>
+            </label>
+            <label class="due-field" for="due-input">
+              <span>截止时间（可选）</span>
+              <input id="due-input" name="dueAt" type="datetime-local" />
+            </label>
+          </div>
           <button type="submit">添加任务</button>
         </form>
         <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>

@@ -19,7 +19,7 @@ describe('loadTodos', () => {
     storage.getItem.mockReturnValue(JSON.stringify(todos));
     vi.stubGlobal('localStorage', storage);
 
-    expect(loadTodos()).toEqual(todos);
+    expect(loadTodos()).toEqual([{ ...todos[0], priority: 'normal', dueAt: null }]);
     expect(storage.getItem).toHaveBeenCalledWith(STORAGE_KEY);
   });
 
@@ -53,7 +53,7 @@ describe('loadTodos', () => {
     storage.getItem.mockReturnValue(JSON.stringify([validTodo, { id: 'broken-id' }, null]));
     vi.stubGlobal('localStorage', storage);
 
-    expect(loadTodos()).toEqual([validTodo]);
+    expect(loadTodos()).toEqual([{ ...validTodo, priority: 'normal', dueAt: null }]);
   });
 });
 
@@ -66,5 +66,22 @@ describe('saveTodos', () => {
     saveTodos(todos);
 
     expect(storage.setItem).toHaveBeenCalledWith(STORAGE_KEY, JSON.stringify(todos));
+  });
+});
+
+describe('todo data migration', () => {
+  it('keeps valid priority and deadline fields while loading', () => {
+    const todo = {
+      id: 'todo-id',
+      title: '已保存任务',
+      completed: false,
+      priority: 'high',
+      dueAt: '2030-02-03T09:30:00.000Z',
+    };
+    const storage = createStorage();
+    storage.getItem.mockReturnValue(JSON.stringify([todo]));
+    vi.stubGlobal('localStorage', storage);
+
+    expect(loadTodos()).toEqual([todo]);
   });
 });
