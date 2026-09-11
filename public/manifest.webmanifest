@@ -10,7 +10,7 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/icons/todo-icon.svg",
+      "src": "./icons/todo-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
