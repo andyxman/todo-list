@@ -1,0 +1,19 @@
+{
+  "name": "我的待办",
+  "short_name": "待办",
+  "description": "一个简单、可离线使用的待办事项应用",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icons/todo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
